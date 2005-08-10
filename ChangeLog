@@ -1,0 +1,33 @@
+2005-08-10 09:31  chris
+
+	* lib/Pod/FromActionscript.pm: Fix regexp to work without
+	  Regexp::Common
+
+2005-08-10 09:26  chris
+
+	* lib/Pod/FromActionscript.pm: v0.51
+
+2005-08-10 09:26  chris
+
+	* MANIFEST, MANIFEST.SKIP, Makefile.PL: Fix MANIFEST Fix
+	  Makefile.PL error
+
+2005-08-10 08:18  chris
+
+	* Build.PL, MANIFEST, Makefile.PL, README, lib/Pod/ASDoc2Pod.pm,
+	  lib/Pod/FromActionscript.pm, script/asdoc2pod, t/asdoc2pod.t:
+	  Change the module name from Pod::ASDoc2Pod to
+	  Pod::FromActionscript
+
+2005-08-09 13:17  chris
+
+	* Build.PL, LICENSE, MANIFEST, MANIFEST.SKIP, Makefile.PL, README,
+	  lib/Pod/ASDoc2Pod.pm, script/asdoc2pod, t/asdoc2pod.t: Initial
+	  revision
+
+2005-08-09 13:17  chris
+
+	* Build.PL, LICENSE, MANIFEST, MANIFEST.SKIP, Makefile.PL, README,
+	  lib/Pod/ASDoc2Pod.pm, script/asdoc2pod, t/asdoc2pod.t: initial
+	  import
+

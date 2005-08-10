@@ -1,6 +1,6 @@
 ---
 name: Pod-FromActionscript
-version: 0.50
+version: 0.51
 author:
   - 'Clotho Advanced Media Inc., I<cpan@clotho.com>'
 abstract: Convert Actionscript documentation to POD
@@ -10,5 +10,5 @@ build_requires:
 provides:
   Pod::FromActionscript:
     file: lib/Pod/FromActionscript.pm
-    version: 0.50
+    version: 0.51
 generated_by: Module::Build version 0.2611

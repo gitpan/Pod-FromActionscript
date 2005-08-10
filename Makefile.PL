@@ -8,6 +8,6 @@ WriteMakefile(
    'EXE_FILES'       => ["script/asdoc2pod"],
    'PL_FILES'        => {},
    ($] >= 5.005 ?
-    (ABSTRACT_FROM => 'lib/CAM/Template.pm',
+    (ABSTRACT_FROM => 'lib/Pod/FromActionscript.pm',
      AUTHOR     => 'Clotho Advanced Media Inc., <cpan@clotho.com>') : ()),
 );

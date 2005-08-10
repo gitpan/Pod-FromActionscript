@@ -5,14 +5,15 @@ use warnings;
 use Exporter;
 use Carp;
 
-our $VERSION = "0.50";
+our $VERSION = "0.51";
 our @ISA = qw(Exporter);
 our @EXPORT = qw();
 our @EXPORT_OK = qw(asdoc2pod);
 
 # Use Regexp::Common if available, but fall back to an extract from
 # v2.120 if needed
-our $comment_re = eval "use Regexp::Common qw(comment); \$RE{comment}{C}" || "(?:(?:\/\*)(?:(?:[^\*]+|\*(?!\/))*)(?:\*\/))";
+our $comment_re = eval "use Regexp::Common qw(comment); \$RE{comment}{C}" 
+    || qr/(?:(?:\/\*)(?:(?:[^\*]+|\*(?!\/))*)(?:\*\/))/;
 
 =head1 NAME
 

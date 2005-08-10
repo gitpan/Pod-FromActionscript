@@ -1,5 +1,6 @@
 index.html
 Build.PL
+ChangeLog
 lib/Pod/FromActionscript.pm
 LICENSE
 Makefile.PL
