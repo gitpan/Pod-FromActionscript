@@ -5,14 +5,16 @@ use warnings;
 use Exporter;
 use Carp;
 
-our $VERSION = "0.51";
+our $VERSION = "0.53";
 our @ISA = qw(Exporter);
 our @EXPORT = qw();
 our @EXPORT_OK = qw(asdoc2pod);
 
 # Use Regexp::Common if available, but fall back to an extract from
 # v2.120 if needed
-our $comment_re = eval "use Regexp::Common qw(comment); \$RE{comment}{C}" 
+our $comment_re =
+    eval("local \$SIG{__WARN__} = 'DEFAULT'; local \$SIG{__DIE__} = 'DEFAULT';".
+         "use Regexp::Common qw(comment); \$RE{comment}{C}")
     || qr/(?:(?:\/\*)(?:(?:[^\*]+|\*(?!\/))*)(?:\*\/))/;
 
 =head1 NAME
@@ -26,6 +28,9 @@ Pod::FromActionscript - Convert Actionscript documentation to POD
     asdoc2pod(infile => "-" outfile => "-");
     asdoc2pod(infile => \*STDIN, outfile => \*STDOUT);
     asdoc2pod(in => $ascontent, out => \$podcontent);
+
+or use the C<asdoc2pod> command-line program included in this
+distribution.
 
 =head1 DESCRIPTION
 
@@ -122,7 +127,8 @@ sub _get_input
       local $/ = undef;
       if (ref $opts->{infile})
       {
-         $in = <$$opts{infile}>;
+         my $infh = $opts->{infile};
+         $in = <$infh>;
       }
       elsif ($opts->{infile} eq "-")
       {
@@ -131,8 +137,8 @@ sub _get_input
       else
       {
          local *IN;
-         open(IN, "< $$opts{infile}")
-             or croak("Failed to read file $$opts{infile}: $!\n");
+         open(IN, '<', $opts->{infile})
+             or croak("Failed to read file $opts->{infile}: $!\n");
          $in = <IN>;
          close(IN);
       }
@@ -179,11 +185,12 @@ sub _write_output
       else
       {
          local *OUT;
-         open(OUT, "> $$opts{outfile}")
-             or croak("Failed to write file $$opts{outfile}: $!\n");
-         print OUT $out;
+         open(OUT, '>', $opts->{outfile})
+             or croak("Failed to write file $opts->{outfile}: $!\n");
+         print(OUT $out)
+             or croak("Failed to write file $opts->{outfile}: $!\n");
          close(OUT)
-             or croak("Failed to write file $$opts{outfile}: $!\n");
+             or croak("Failed to write file $opts->{outfile}: $!\n");
       }
    }
    else
@@ -205,7 +212,7 @@ sub _convert
 
    my @out;
    my @parts = split /($comment_re)/, $content;
-   #warn "Got ".@parts." parts in ".length($content)." characters\n" if ($opts->{verbose});
+   #_diag($opts, "Got ".@parts." parts in ".length($content)." characters\n");
 
    my $over = 0;
    my $inapi = 0;
@@ -233,13 +240,13 @@ sub _convert
              $parts[$i+1] =~ /^\s*(?:class|interface)\s+([^\s;]+)/)
          {
             my $class = $1;
-            warn "Class: $class\n" if ($opts->{verbose});
+            _diag($opts, "Class: $class\n");
             
             my $descrip = "";
-            my $name = get_name(\$comment);
-            my $license = get_license(\$comment);
-            my $author = get_author(\$comment);
-            my $sees = get_sees(\$comment);
+            my $name = _get_name(\$comment);
+            my $license = _get_license(\$comment);
+            my $author = _get_author(\$comment);
+            my $sees = _get_sees(\$comment);
             if ($comment =~ /\S/)
             {
                $descrip = "=head1 DESCRIPTION\n\n$comment\n\n";
@@ -272,11 +279,11 @@ sub _convert
                push @out, "=over\n\n";
             }
             
-            warn "Function: ".($private?"private ":"").($static?"static ":"")."function $fname($args)$ftype\n" if ($opts->{verbose});
+            _diag($opts, "Function: ".($private?"private ":"").($static?"static ":"")."function $fname($args)$ftype\n");
             
-            my ($paramlist, $params) = get_params(\$comment); 
-            my $returns = get_returns(\$comment); 
-            my $sees = get_sees(\$comment); 
+            my ($paramlist, $params) = _get_params(\$comment); 
+            my $returns = _get_returns(\$comment); 
+            my $sees = _get_sees(\$comment); 
             
             $comment = "=item $fname$paramlist\n\n$params$comment\n\n$returns$sees";
          }
@@ -291,17 +298,10 @@ sub _convert
             $private = $private =~ /private/;
             $static = $static =~ /static/;
             
-            if (defined $default)
+            $default =~ s/^\s*=\s*//;
+            if ($default ne "")
             {
-               $default =~ s/^\s*=\s*//;
-               if ($default ne "")
-               {
-                  $default = "B<Default value:> $default\n\n";
-               }
-            }
-            else
-            {
-               $default = "";
+               $default = "B<Default value:> $default\n\n";
             }
             
             if (!$inapi)
@@ -317,11 +317,11 @@ sub _convert
                push @out, "=over\n\n";
             }
             
-            warn "Var: ".($private?"private ":"").($static?"static ":"")."var $vname$vtype\n" if ($opts->{verbose});
+            _diag($opts, "Var: ".($private?"private ":"").($static?"static ":"")."var $vname$vtype\n");
             
-            my ($paramlist, $params) = get_params(\$comment); 
-            my $returns = get_returns(\$comment); 
-            my $sees = get_sees(\$comment); 
+            my ($paramlist, $params) = _get_params(\$comment); 
+            my $returns = _get_returns(\$comment); 
+            my $sees = _get_sees(\$comment); 
             
             $comment = "=item $vname$paramlist\n\n$params$comment\n\n$default$returns$sees";
          }
@@ -365,7 +365,8 @@ sub _convert
 
 ###############################################
 
-sub get_params
+# Extracts @param tags from comments
+sub _get_params
 {
    my $R_comment = shift;
 
@@ -385,7 +386,9 @@ sub get_params
    #}
    return ($paramlist, $params);
 }
-sub get_returns
+
+# Extracts @returns tags from comments
+sub _get_returns
 {
    my $R_comment = shift;
 
@@ -397,7 +400,9 @@ sub get_returns
    }
    return $returns;
 }
-sub get_sees
+
+# Extracts @see tags from comments
+sub _get_sees
 {
    my $R_comment = shift;
 
@@ -409,7 +414,9 @@ sub get_sees
    }
    return $sees;
 }
-sub get_author
+
+# Extracts @author tags from comments
+sub _get_author
 {
    my $R_comment = shift;
 
@@ -421,7 +428,9 @@ sub get_author
    }
    return $author;
 }
-sub get_license
+
+# Extracts @license tags from comments
+sub _get_license
 {
    my $R_comment = shift;
 
@@ -433,7 +442,9 @@ sub get_license
    }
    return $license;
 }
-sub get_name
+
+# Extracts =head1 NAME from comments
+sub _get_name
 {
    my $R_comment = shift;
 
@@ -447,9 +458,63 @@ sub get_name
    return $name;
 }
 
+sub _diag
+{
+   my $opts = shift;
+   my $msg = shift;
+
+   warn $msg if ($opts->{verbose});
+}
+
 1;
 
 __END__
+
+=back
+
+=head1 SEE ALSO
+
+JavaDoc-style Actionscript documentation (sometimes called ASDoc)
+derives from Sun's JavaDoc system.  The official JavaDoc page:
+L<http://java.sun.com/j2se/javadoc/>
+
+Here are some actively-developed non-Perl tools that can also render
+Actionscript comments.  None of these do POD, but that's not always a
+drawback.
+
+=over
+
+=item VisDoc
+
+Commercial, Mac OSX only.  This one makes very pretty HTML output.
+
+L<http://visiblearea.com/visdoc/>
+
+=item as2api
+
+Ruby, GPL (I think), cross-platform, fairly well documented.  The URL below contains links to a lot of other parsers.
+
+L<http://www.badgers-in-foil.co.uk/projects/as2api/>
+
+=item AS2Doc
+
+Commercial, Windows-only.  I haven't tried it.
+
+L<http://www.as2doc.com/>
+
+=item AS2Docular
+
+Free, web-based, in development (will be released "soon"), HTML
+output only.  Supports Dreamweaver template syntax.
+
+L<http://www.senocular.com/projects/AS2Docular/help.php>
+
+=item ACID
+
+Python, Windows only, no license specified, HTML output.  The
+code is uncommented and nearly unintelligible.
+
+L<http://icube.freezope.org/acid>
 
 =back
 

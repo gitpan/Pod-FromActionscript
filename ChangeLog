@@ -1,3 +1,20 @@
+2005-09-26 18:29  chris
+
+	* MANIFEST: Fix manifest
+
+2005-09-26 18:28  chris
+
+	* MANIFEST.SKIP, lib/Pod/FromActionscript.pm, t/asdoc2pod.t,
+	  t/example/foo.expect, t/example/foo.in: Add many regression tests
+	  Minor code tweaks
+
+2005-09-20 16:34  chris
+
+	* Build.PL, MANIFEST, MANIFEST.SKIP, lib/Pod/FromActionscript.pm,
+	  t/pod-coverage.t, t/pod.t: v0.52 Cleaned up docs, added SEE ALSO
+	  section Changed the names of many internal methods Added standard
+	  doc tests
+
 2005-08-10 09:31  chris
 
 	* lib/Pod/FromActionscript.pm: Fix regexp to work without
